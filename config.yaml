@@ -1,0 +1,7 @@
+llm: Qwen/Qwen3-VL-8B-Instruct
+embeddings_model: BAAI/bge-small-en-v1.5
+
+paths:
+  data: data
+  chroma: db/chroma
+  prompts: src/prompts.yaml

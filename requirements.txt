@@ -1,0 +1,5 @@
+chroma-haystack>=3.4.1
+haystack-ai>=2.21.0
+haystack-experimental>=0.14.3
+python-dotenv>=1.2.1
+streamlit>=1.52.2
