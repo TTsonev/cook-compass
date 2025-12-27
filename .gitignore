@@ -22,6 +22,7 @@ Desktop.ini
 *.log
 *.sql
 *.sqlite
+db/
 
 # Build outputs and dependencies
 node_modules/
@@ -64,4 +65,4 @@ temp/
 *.cache
 coverage/
 *.cover
-db/
+data/
