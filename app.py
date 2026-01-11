@@ -8,7 +8,7 @@ from src.inference import InferenceEngine
 load_dotenv(find_dotenv())
 logging.basicConfig(level=logging.INFO)
 
-st.set_page_config(page_title="Cook Compass")
+st.set_page_config(page_title="Cook Compass", page_icon="🧭")
 
 
 @st.cache_resource
@@ -18,8 +18,7 @@ def get_inference_engine():
 
 inference_engine = get_inference_engine()
 
-st.title("Cook Compass")
-st.markdown("Beschreibung")
+st.title("🧭 Cook Compass")
 
 with st.sidebar:
     st.header("Settings")
@@ -27,18 +26,42 @@ with st.sidebar:
         st.session_state.messages = []
         st.rerun()
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+# 1. Automatic Greeting
+if "messages" not in st.session_state or len(st.session_state.messages) == 0:
+    st.session_state.messages = [
+        {"role": "assistant",
+         "content": "Hi! I'm Cook Compass. 🧭\n\n"
+                    "I can help you find recipes based on your ingredients. What would you like to cook today?"}
+    ]
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-if prompt := st.chat_input("What's cooking, good-looking?"):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+if len(st.session_state.messages) == 1:
+    st.markdown("Try one of these to get started:")
+    col1, col2, col3 = st.columns(3)
 
+    with col1:
+        if st.button("🐔 Chicken Recipe"):
+            st.session_state.messages.append({"role": "user", "content": "I want something with chicken."})
+            st.rerun()
+
+    with col2:
+        if st.button("🍳 No Oven"):
+            st.session_state.messages.append({"role": "user", "content": "I have no oven, what can I cook?"})
+            st.rerun()
+
+    with col3:
+        if st.button("🥗 Healthy"):
+            st.session_state.messages.append({"role": "user", "content": "Give me a healthy recipe."})
+            st.rerun()
+
+if prompt := st.chat_input("What's cooking?"):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    st.rerun()
+
+if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
     with st.chat_message("assistant"):
         stream = inference_engine.stream_response(
             [
