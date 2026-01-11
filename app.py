@@ -1,7 +1,8 @@
-import os
 import logging
+
 import streamlit as st
 from dotenv import find_dotenv, load_dotenv
+
 from src.inference import InferenceEngine
 
 load_dotenv(find_dotenv())
@@ -9,9 +10,11 @@ logging.basicConfig(level=logging.INFO)
 
 st.set_page_config(page_title="Cook Compass")
 
+
 @st.cache_resource
 def get_inference_engine():
     return InferenceEngine.from_config()
+
 
 inference_engine = get_inference_engine()
 
