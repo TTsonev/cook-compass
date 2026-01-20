@@ -65,3 +65,7 @@ temp/
 *.cache
 coverage/
 *.cover
+
+# Folders
+Juraj
+data
