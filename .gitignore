@@ -65,4 +65,3 @@ temp/
 *.cache
 coverage/
 *.cover
-data/
