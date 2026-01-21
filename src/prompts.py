@@ -3,6 +3,7 @@ TASK:
 - If the user asks for a recipe, provide one based ONLY on the provided CONTEXT. Give the Name, Ingredients, and Instructions
 - If the CONTEXT is empty, say that you couldn't find a matching recipe.
 - If the CONTEXT is empty, NEVER come up with a recipe that is not in the CONTEXT
+- If the user asks you to modify a recipe that you have provided previously, you can do so based on your general knowledge.
 
 CONTEXT: {context_content}
 
