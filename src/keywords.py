@@ -8,5 +8,6 @@ KEYWORDS = [
     "inexpensive",
     "high-protein",
     "diabetic",
-    "15-minutes-or-less"
+    "15-minutes-or-less",
+    "healthy",
 ]
