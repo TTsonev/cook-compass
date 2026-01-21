@@ -1,4 +1,4 @@
-llm: "Qwen/Qwen3-VL-8B-Instruct"
+llm: "Qwen/Qwen2.5-7B-Instruct"
 embeddings_model: BAAI/bge-base-en-v1.5
 
 paths:
