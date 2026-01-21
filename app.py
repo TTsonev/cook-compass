@@ -43,13 +43,13 @@ if len(st.session_state.messages) == 1:
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        if st.button("🐔 Chicken Recipe"):
-            st.session_state.messages.append({"role": "user", "content": "I want something with chicken."})
+        if st.button("🌱 Vegan Recipe"):
+            st.session_state.messages.append({"role": "user", "content": "Suggest a vegan recipe."})
             st.rerun()
 
     with col2:
-        if st.button("🍳 No Oven"):
-            st.session_state.messages.append({"role": "user", "content": "I have no oven, what can I cook?"})
+        if st.button("⏱️ 15 mins or less"):
+            st.session_state.messages.append({"role": "user", "content": "What can I make in 15 minutes or less?"})
             st.rerun()
 
     with col3:
