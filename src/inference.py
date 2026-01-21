@@ -10,9 +10,10 @@ from haystack.utils import Secret
 from haystack_integrations.document_stores.chroma import ChromaDocumentStore
 
 from .ingest import ingest_csv_data
-from .prompts import intro_prompt
+from .prompts import intro_prompt, rewrrite_query_prompt, keywords_prompt
 from .retrievers import VectorRetrieverPipeline
 from .utils import PROJECT_ROOT, load_config
+from .keywords import KEYWORDS
 
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -78,12 +79,9 @@ class InferenceEngine:
             role = "User" if msg['role'] == 'user' else "Assistant"
             conversation_text += f"{role}: {msg['content']}\n"
 
-        rewrite_prompt = (
-            f"You are a helpful assistant improving search queries for a recipe database.\n"
-            f"Current User Request: '{last_user_msg}'\n\n"
-            f"Based on the conversation history below, rewrite the user request into a specific, standalone search query that includes necessary context (like main ingredient).\n"
-            f"Conversation History:\n{conversation_text}\n"
-            f"Output ONLY the rewritten search query keywords, nothing else."
+        rewrite_prompt = rewrrite_query_prompt.format(
+            last_user_msg=last_user_msg,
+            conversation_text=conversation_text
         )
 
         original_callback = self.llm.streaming_callback
@@ -91,8 +89,8 @@ class InferenceEngine:
 
         try:
             response = self.llm.run([ChatMessage.from_user(rewrite_prompt)])
-            rewritten_query = response["replies"][0].text
-            rewritten_query = rewritten_query.strip().split('\n')[0]
+            rewritten_query = response["replies"][0].text.strip()
+            print(f"REWR: {rewritten_query}")
 
             logger.info(f"Original Query: '{last_user_msg}' -> Rewritten: '{rewritten_query}'")
             return rewritten_query
@@ -101,6 +99,33 @@ class InferenceEngine:
             return last_user_msg
         finally:
             self.llm.streaming_callback = original_callback
+    
+    def _extract_keywords(self, query: str) -> List[str]:
+        prompt = keywords_prompt.format(
+            query=query,
+            available_keywords=', '.join(KEYWORDS)
+        )
+
+        original_callback = self.llm.streaming_callback
+        self.llm.streaming_callback = None
+
+        try:
+            response = self.llm.run([ChatMessage.from_user(prompt)])
+            content = response["replies"][0].text.strip()
+            
+            if not content:
+                return []
+                
+            found_keywords = [k.strip() for k in content.split(',')]
+            # Validate
+            valid_keywords = [k for k in found_keywords if k in KEYWORDS]
+            return valid_keywords
+        except Exception as e:
+            logger.error(f"Error extracting keywords: {e}")
+            return []
+        finally:
+            self.llm.streaming_callback = original_callback
+
 
     def _build_messages(self, query: str, context_docs: List[Document], message_history: List[dict]) -> List[
         ChatMessage]:
@@ -134,9 +159,24 @@ class InferenceEngine:
         last_user_message = message_history[-1]['content']
 
         search_query = self._generate_search_query(message_history)
-
+        
+        logger.info(f"Search Query: {search_query}")
         context_docs = self.retriever.retrieve_documents(search_query)
 
+        extracted_keywords = self._extract_keywords(search_query)
+        logger.info(f"Extracted keywords: {extracted_keywords}")
+
+        if extracted_keywords:
+            filter_docs = [
+                doc for doc in context_docs 
+                if all(k in doc.meta.get('tags', []) for k in extracted_keywords)
+            ]
+            
+            if filter_docs:
+                logger.info(f"Filtered down to {len(filter_docs)} documents based on keywords.")
+                context_docs = filter_docs
+
+        logger.info(f'Context: {[doc.meta.get('name', 'unknown') for doc in context_docs]}')
         prompt = self._build_messages(last_user_message, context_docs, message_history[:-1])
 
         # output streaming (should be doable only with a callback but I couldn't find anything in the docs)

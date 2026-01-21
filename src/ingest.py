@@ -40,7 +40,6 @@ def _clean_list_string(text: Any) -> str:
     except Exception:
         return str(text)
 
-
 def _load_and_validate_config() -> Tuple[Any, str]:
     """Loads config and ensures API token is present."""
     api_token = os.getenv("API_TOKEN")
@@ -95,17 +94,19 @@ def _transform_data_to_documents(df: pd.DataFrame) -> List[Document]:
         try:
             clean_ingredients = _clean_list_string(row.get('ingredients', row.get('tags', '')))
             clean_steps = _clean_list_string(row.get('steps', ''))
+            clean_tags = _clean_list_string(row.get('tags', ''))
 
             content_for_embedding = (
                 f"Recipe: {row['name']}\n"
-                f"Ingredients: {clean_ingredients}"
+                f"Ingredients: {clean_ingredients}\n"
             )
 
             meta_data = {
                 "name": row['name'],
                 "steps": clean_steps,
                 "minutes": row.get('minutes', 0),
-                "original_id": row.get('id', index)
+                "original_id": row.get('id', index),
+                "tags": clean_tags
             }
 
             doc = Document(content=content_for_embedding, meta=meta_data)
