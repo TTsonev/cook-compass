@@ -44,8 +44,3 @@ class VectorRetrieverPipeline(BaseRetrieverPipeline):
     def retrieve_documents(self, query: str) -> List[Document]:
         results = self.pipeline.run({"query_embedder": {"text": query}})
         return results["retriever"]["documents"]
-
-
-class HybridRetriever(BaseRetrieverPipeline):
-    # TODO: implement (https://haystack.deepset.ai/tutorials/33_hybrid_retrieval)
-    pass
