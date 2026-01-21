@@ -6,13 +6,12 @@
 
 ## Abstract
 
-Cook Compass is a Generative AI application designed to solve the "dinner dilemma" for students and home cooks,
-specifically focusing on vegetarian cuisine. The problem is that traditional search engines prioritize SEO-optimized,
-life-story-heavy content over concise cooking instructions, and generic chatbots often hallucinate culinary nonsensical
-recipes. We developed a Retrieval-Augmented Generation (RAG) system that allows users to input natural language
-queries (e.g., ingredients, constraints) and retrieves verified recipes from a structured dataset. The system filters
-for relevance and dietary compliance, aiming to increase the success rate of finding a cookable meal compared to
-standard browsing.
+Cook Compass is a Generative AI application designed to solve the "dinner dilemma" for students and home cooks.
+The problem is that traditional search engines prioritize SEO-optimized, life-story-heavy content over concise cooking
+instructions, and generic chatbots often hallucinate culinary nonsensical recipes. We developed a Retrieval-Augmented
+Generation (RAG) system that allows users to input natural language queries (e.g., ingredients, constraints) and
+retrieves verified recipes from a structured dataset. The system filters for relevance and dietary compliance, aiming to
+increase the success rate of finding a cookable meal compared to standard browsing.
 
 ## Description
 
@@ -44,19 +43,28 @@ We implemented a RAG (Retrieval-Augmented Generation) architecture to ground the
 * Retrieval: We employ dense retrieval using the `BAAI/bge-base-en-v1.5` embedding model. This captures semantic
   similarity (e.g., matching "no oven" to "stovetop") better than keyword search.
 
-* Keyword Filtering: To improve precision for dietary and constraint-based queries, we use a two-stage filtering system. After vector retrieval returns the top-k semantically similar recipes, the LLM extracts relevant keywords from the user query—including dietary tags (vegan, vegetarian, gluten-free, kosher, lactose-free, low-carb, high-protein, diabetic) and lifestyle constraints (inexpensive, 15-minutes-or-less, healthy). The system then filters results to include only recipes whose metadata contains all identified keywords. For example, "quick vegan protein meals" returns only recipes tagged with vegan, high-protein, and 15-minutes-or-less. If no recipes match all constraints, the system falls back to the original top-k results to avoid empty responses. This approach combines semantic retrieval flexibility with strict metadata filtering.
+* Keyword Filtering: To improve precision for dietary and constraint-based queries, we use a two-stage filtering system.
+  After vector retrieval returns the top-k semantically similar recipes, the LLM extracts relevant keywords from the
+  user query—including dietary tags (vegan, vegetarian, gluten-free, kosher, lactose-free, low-carb, high-protein,
+  diabetic) and lifestyle constraints (inexpensive, 15-minutes-or-less, healthy). The system then filters results to
+  include only recipes whose metadata contains all identified keywords. For example, "quick vegan protein meals" returns
+  only recipes tagged with vegan, high-protein, and 15-minutes-or-less. If no recipes match all constraints, the system
+  falls back to the original top-k results to avoid empty responses. This approach combines semantic retrieval
+  flexibility with strict metadata filtering.
 
-* Generation: For the generation step, we utilized the `Qwen/Qwen3-VL-8B-Instruct` model via the Hugging Face Serverless
+* Generation: For the generation step, we utilized the `Qwen/Qwen2.5-7B-Instruct` model via the Hugging Face Serverless
   API. We chose this for its cost-efficiency.
 
 ### Challenges
 
-We had problems with the size of the data set because we underestimated the resources that would have been necessary for this. Therefore, we had to limit ourselves to a greatly reduced sample of the data.
+We had problems with the size of the data set because we underestimated the resources that would have been necessary for
+this. Therefore, we had to limit ourselves to a greatly reduced sample of the data.
 
 ## Evaluation
 
 We adopted an LLM-as-a-Judge approach to evaluate the system, as manual review of generative output is unscalable. Using
-a Jupyter Notebook (`LLM_as_judge.ipynb`), we tasked a stronger model (Llama-3-8B) to act as an impartial judge.
+a Jupyter Notebook (`notebooks/LLM_as_judge+visualise_results.ipynb`), we tasked a stronger model (`Llama-3-8B`)
+to act as an impartial judge.
 
 The judge evaluated user-response pairs on three criteria (0-10 scale):
 
@@ -64,22 +72,32 @@ The judge evaluated user-response pairs on three criteria (0-10 scale):
 * Healthiness: Was the recipe nutritional balanced?
 * Taste: Was the culinary combination plausible?
 
-**Results:** Based on 80 test queries evaluated by Llama-3.1-8B-Instruct:
+**Results:** Based on 80 test queries evaluated by `Llama-3.1-8B-Instruct`:
 
 * **Relevance: 7.97/10** - The system scored high on direct ingredient queries.
-* **Healthiness: 6.91/10** - Moderate scores could be reflecting the varied nutritional quality present in the Food.com dataset itself.
-* **Taste: 7.83/10** - Strong scores indicating that by retrieving from a curated dataset rather than letting the LLM hallucinate from scratch, we maintained high culinary quality.
+* **Healthiness: 6.91/10** - Moderate scores could be reflecting the varied nutritional quality present in the Food.com
+  dataset itself.
+* **Taste: 7.83/10** - Strong scores indicating that by retrieving from a curated dataset rather than letting the LLM
+  hallucinate from scratch, we maintained high culinary quality.
 
-The evaluation pipeline generated queries using three templates: standard keyword requests (35%), personal dietary conditions (35%), and ingredient-based queries with constraints (30%). The visualization of these results can be found in `images/Evaluation.png`.
+The evaluation pipeline generated queries using three templates: standard keyword requests (35%), personal dietary
+conditions (35%), and ingredient-based queries with constraints (30%).
+
+![Evaluation Results Graph](llm_evaluation.png)
+*Figure 1: Average scores across Relevance, Healthiness, and Taste.*
 
 **Did it work?**:
-Partially. The system succeeds at its core goal—returning real recipes instead of hallucinated ones—but has notable limitations:
+Partially. The system succeeds at its core goal—returning real recipes instead of hallucinated ones—but has notable
+limitations:
+
 * Keyword filtering correctly enforces dietary constraints when matching recipes exist.
 * No complete fabrications (ingredients/steps mostly sourced from dataset).
 * Dataset size bottleneck: With only 450 recipes some reasonable queries return poor matches.
-* Evaluation bias: LLM-as-a-Judge is not ground truth—it may score nonsensical but well-formatted responses highly. 
+* Evaluation bias: LLM-as-a-Judge is not ground truth—it may score nonsensical but well-formatted responses highly.
 
-The 7-8/10 scores are misleading. They reflect average performance across easy and hard queries. In practice, performance is bimodal: excellent for common vegetarian pasta dishes, poor for niche dietary combinations. The system is a proof-of-concept that validates the RAG approach but is not production-ready without significant dataset expansion.
+The 7-8/10 scores are misleading. They reflect average performance across easy and hard queries. In practice,
+performance is bimodal: excellent for common vegetarian pasta dishes, poor for niche dietary combinations. The system is
+a proof-of-concept that validates the RAG approach but is not production-ready without significant dataset expansion.
 
 ## Reflection
 
@@ -95,10 +113,13 @@ the final decision-maker, but they are presented with better options faster.
 Yes, we would develop this further. While the current prototype works, the dataset site constraint is currently
 soft-enforced via the dataset and prompt. A future version would need:
 
-1) Dataset Expansion: The current 450-recipe subset limits variety. Scaling to 5,000-10,000 recipes would improve coverage, especially for underrepresented categories like lactose-free (currently 0 recipes).
+1) Dataset Expansion: The current 450-recipe subset limits variety. Scaling to 5,000-10,000 recipes would improve
+   coverage, especially for underrepresented categories like lactose-free (currently 0 recipes).
 
-2) Multi-Modal Input: Allow users to upload a photo of their fridge/pantry and use vision-language models to automatically extract available ingredients.
+2) Multi-Modal Input: Allow users to upload a photo of their fridge/pantry and use vision-language models to
+   automatically extract available ingredients.
 
 3) Personalization: Adding a user memory module so the bot remembers allergies or dislikes across sessions.
 
-4) Nutritional Analysis: Add the nutrition data (calories, protein, carbs) in the UI to help users make informed choices beyond just taste.
+4) Nutritional Analysis: Add the nutrition data (calories, protein, carbs) in the UI to help users make informed choices
+   beyond just taste.

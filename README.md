@@ -1,13 +1,19 @@
 # Cook Compass
 
-Cook Compass is a RAG-based (Retrieval-Augmented Generation) recipe assistant. It focuses on finding and recommending
-vegetarian recipes based on user ingredients. It uses a vector database to search a subset of Food.com data and an LLM
-to generate helpful responses.
+**Cook Compass** is a RAG-based (Retrieval-Augmented Generation) recipe assistant designed to solve the "dinner
+dilemma." Unlike generic chatbots that often hallucinate ingredients, Cook Compass retrieves verified recipes from a
+structured dataset based on the ingredients you actually have at home.
 
 ## Live Demo
 
 If you don't want to set up the environment locally, you can test the deployed version here:
 **[https://cook-compass.streamlit.app/](https://cook-compass.streamlit.app/)**
+
+## Technical Report
+
+For a detailed analysis of our architecture, user journey, and evaluation results (Abstract, Description, Evaluation,
+Reflection), please refer to the PDF version of our report or view the markdown source here: *
+*[docs/technical_report.md](docs/technical_report.md)**.
 
 ---
 
@@ -47,9 +53,8 @@ streamlit run app.py
 ```
 
 **Note on Database Ingestion:** You don't need to run a separate script to build the database. When you run `app.py`,
-the
-system checks if the ChromaDB vector store is empty. If it is, it automatically runs the ingestion pipeline to process
-the CSV and create embeddings.
+the system checks if the ChromaDB vector store is empty. If it is, it automatically runs the ingestion pipeline to
+process the CSV and create embeddings.
 
 ---
 
@@ -59,31 +64,26 @@ Here is a quick overview of the files to help you navigate the code:
 
 ```text
 cook-compass/
-├── app.py                  # Main entry point. Runs the Streamlit UI.
-├── config.yaml             # Settings for models, paths, and file names.
-├── .env                    # Store your API_TOKEN here (not committed).
-├── requirements.txt        # Python dependencies.
-├── LLM_as_judge.ipynb      # Notebook for evaluating response quality.
-├── docs/                   # Contains the technical report and the project plan.
+├── app.py                      # Main entry point. Runs the Streamlit UI.
+├── config.yaml                 # Settings for models, paths, and file names.
+├── .env                        # Store your API_TOKEN here (not committed).
+├── requirements.txt            # Python dependencies.
+├── docs/                       # Contains the technical report and the project plan.
 ├── data/
-│   └── small_recipes.csv   # The source dataset.
-├── db/                     # Created automatically. Stores the ChromaDB vectors.
+│   └── small_recipes.csv       # The source dataset.
+├── db/                         # Created automatically. Stores the ChromaDB vectors.
+├── notebooks/
+│   ├── Create_small_dataset.ipynb           # Preprocessing script to create the recipe subset.
+│   ├── generate_test_queries.ipynb          # Generates synthetic user queries for testing.
+│   └── LLM_as_judge+visualise_results.ipynb # Runs the evaluation pipeline and visualizes results.
 └── src/
-    ├── ingest.py           # Logic to load CSV, clean data, and save to ChromaDB.
-    ├── inference.py        # The RAG engine. Handles retrieval and LLM generation.
-    ├── retrievers.py       # Haystack pipeline definitions (Embeddings + Retrieval).
-    ├── prompts.py          # System prompts for the AI Chef persona.
-    └── utils.py            # Helper functions for paths and config loading.
+    ├── ingest.py               # Logic to load CSV, clean data, and save to ChromaDB.
+    ├── inference.py            # The RAG engine. Handles retrieval and LLM generation.
+    ├── retrievers.py           # Haystack pipeline definitions (Embeddings + Retrieval).
+    ├── prompts.py              # System prompts for the AI Chef persona.
+    ├── keywords.py             # Defines the list of dietary keywords (e.g., vegan, keto) for filtering.
+    └── utils.py                # Helper functions for paths and config loading.
 ```
-
-## Evaluation
-
-We evaluate the system using an "LLM-as-a-Judge" approach. The `LLM_as_judge.ipynb` notebook uses a stronger model (like
-Llama-3) to score the recommendations based on:
-
-1) Relevance (Does it match the user's ingredients?)
-2) Healthiness (Nutritional balance)
-3) Taste (Culinary logic)
 
 ## Tech Stack
 
@@ -91,4 +91,16 @@ Llama-3) to score the recommendations based on:
 * Frontend: Streamlit
 * Vector Database: ChromaDB
 * Embeddings: BAAI/bge-base-en-v1.5
-* LLM: Qwen/Qwen3-VL-8B-Instruct (via Hugging Face Serverless API)
+* LLM: Qwen/Qwen2.5-7B-Instruct (via Hugging Face)
+
+## Evaluation
+
+We evaluate the system using an **"LLM-as-a-Judge"** approach. The notebook
+`notebooks/LLM_as_judge+visualise_results.ipynb` uses a stronger model to grade responses on a 0-10 scale:
+
+1. **Relevance:** Does the recipe match the ingredients and constraints?
+2. **Healthiness:** Nutritional assessment (balance of ingredients).
+3. **Taste:** Culinary logic and flavor combinations.
+
+**Results:** The system achieves high scores for relevance and taste (~8/10) by retrieving from a curated dataset rather
+than generating recipes from scratch. See `docs/technical_report.pdf` for more results.
